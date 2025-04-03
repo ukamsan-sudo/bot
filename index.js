@@ -1,44 +1,56 @@
-const express = require('express');
+const mineflayer = require('mineflayer');
+require('colors').enable();
 
-const app = express();
+const botUsername = 'derfoglive_01';
+const botPassword = 'fazliddinov';
+const admin = 'lavash_city';
+var playerList = [];
+var mcData;
 
-app.get('/', (req, res) => {
-  res.send('Hello Express app!')
-});
+const botOption = {
+    host: 'hypixel.uz',
+    port: 25565,
+    username: botUsername,
+    password: botPassword,
+    version: '1.18.1',
+};
 
-app.listen(3000, () => {
-  console.log('server started');
-});
-const mineflayer = require('mineflayer')
+init();
 
-const bot = mineflayer.createBot({
-host:'ir.skyblock.uz',
-port: 25566,
-username: 'derfoglive_01'
-})
-bot.on('messagestr', (message) => {
-  if(message.includes("/register"))
-  {
-    bot.chat("/reg fazliddinov fazliddinov")
-  }
-  
+function init() {
+    var bot = mineflayer.createBot(botOption);
 
-}
+    bot.on("spawn", () => {
+        mcData = require("minecraft-data")(bot.version);
+        console.log("Bot serverga kirdi!");
 
+        // Serverga kirganda /is warp sell yozish
+        bot.chat("/is warp miner1");
 
-)
-bot.on('messagestr', (message) => {
-  if(message.includes("/log"))
-  {
-    bot.chat("/login fazliddinov")
-  }
-  
+    });
 
-}
+    bot.on("messagestr", (message) => {
+        if (message.startsWith("Skyblock »")) return;
+        console.log(message);
 
+        // Server restart bo'lsa chiqish
+        if (message === "Server: Serverni kunlik restartiga 30 sekund qoldi") {
+            bot.quit("20min");
+        }
 
-)
-async function dig() {
+        // Ro‘yxatdan o‘tish yoki login qilish
+        if (message.includes("register")) {
+            bot.chat(`/register ${botPassword} ${botPassword}`);
+        }
+        if (message.includes("login")) {
+            bot.chat(`/login ${botPassword}`);
+        }
+    if (message.includes("Вы успешно вошли в аккаунт")) {
+            bot.chat(`/is warp miner1`);
+        }
+    });
+  
+  async function dig() {
   if (!bot.heldItem || !bot.heldItem.name.includes('pickaxe')) {
     var pickaxe = bot.inventory.items().filter(i => i.name.includes('pickaxe'))[0];
     if (pickaxe) await bot.equip(pickaxe, 'hand')
@@ -56,15 +68,15 @@ bot.once("spawn", () => {
         dig();
    }, 20000); 
 })
-bot.on('chat', (username, message) => {
-    if (username === ''lavash_city') {
-    if (message.indexOf('*') !== -1) {
-            var replacement = "*",
-                toReplace = "",
-                str = message
 
-            str = str.replace(replacement, toReplace)
-            bot.chat(str)
-        }}})
-    bot.on('kicked', console.log)
-bot.on('error', console.log)
+
+    // Admindan buyruqlarni bajarish
+    bot.on("chat", (usernameSender, message) => {
+        if (usernameSender === admin && message.startsWith("! ")) {
+            const command = message.replace("! ", "");
+            bot.chat(command);
+        }
+    });
+
+}
+
