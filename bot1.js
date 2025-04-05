@@ -1,8 +1,8 @@
 const mineflayer = require('mineflayer');
 require('colors').enable();
 
-const botUsername = 'Lavash_Bot';
-const botPassword = 'lavash123';
+const botUsername = 'derfoglive_01';
+const botPassword = 'fazliddinov';
 const admin = 'lavash_city';
 var playerList = [];
 var mcData;
@@ -24,11 +24,9 @@ function init() {
         mcData = require("minecraft-data")(bot.version);
         console.log("Bot serverga kirdi!");
 
-        // AFK oldini olish uchun har 3 daqiqada bir sakrash
-        setInterval(() => {
-            bot.setControlState("jump", true);
-            setTimeout(() => bot.setControlState("jump", false), 500);
-        }, 3 * 60 * 1000);
+        // Serverga kirganda /is warp sell yozish
+        bot.chat("/is warp miner1");
+
     });
 
     bot.on("messagestr", (message) => {
@@ -47,12 +45,35 @@ function init() {
         if (message.includes("login")) {
             bot.chat(`/login ${botPassword}`);
         }
+    if (message.includes("Вы успешно вошли в аккаунт")) {
+            bot.chat(`/is warp miner1`);
+        }
     });
+  
+  async function dig() {
+  if (!bot.heldItem || !bot.heldItem.name.includes('pickaxe')) {
+    var pickaxe = bot.inventory.items().filter(i => i.name.includes('pickaxe'))[0];
+    if (pickaxe) await bot.equip(pickaxe, 'hand')
+    if(!pickaxe) bot.quit();
+  }
+  var block = bot.blockAtCursor(7);
+  if (!block) return setTimeout(function() {
+    dig();
+  }, 100);
+  await bot.dig(block, 'ignore', 'raycast')
+  dig()
+}
+bot.once("spawn", () => {
+    setTimeout(() => {
+        dig();
+   }, 20000); 
+})
+
 
     // Admindan buyruqlarni bajarish
     bot.on("chat", (usernameSender, message) => {
-        if (usernameSender === admin && message.startsWith("!1 ")) {
-            const command = message.replace("!1 ", "");
+        if (usernameSender === admin && message.startsWith("! ")) {
+            const command = message.replace("! ", "");
             bot.chat(command);
         }
     });
