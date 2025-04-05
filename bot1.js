@@ -2,7 +2,7 @@ const mineflayer = require('mineflayer');
 require('colors').enable();
 
 const botUsername = 'lavash_kibr';
-const botPassword = 'fazliddinov';
+const botPassword = 'fambot';
 const admin = 'lavash_city';
 var playerList = [];
 var mcData;
