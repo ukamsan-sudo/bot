@@ -46,7 +46,7 @@ function init() {
             bot.chat(`/login ${botPassword}`);
         }
     if (message.includes("Вы успешно вошли в аккаунт")) {
-            bot.chat(`/is warp miner1`);
+            bot.chat(`/is warp miner2`);
         }
     });
   
