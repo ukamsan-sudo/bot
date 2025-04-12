@@ -1,4 +1,4 @@
-const http = require('http');
+
 const mineflayer = require('mineflayer');
 require('colors').enable();
 
@@ -87,12 +87,3 @@ function init() {
             if (!block) {
                 return setTimeout(dig, 100); // Blok topilmasa kutadi
             }
-
-            await bot.dig(block);
-            dig(); // Recursive chaqirish
-        } catch (err) {
-            console.log('Xatolik:', err);
-            setTimeout(dig, 500); // Xatolik bo‘lsa keyinroq urinadi
-        }
-    }
-}
