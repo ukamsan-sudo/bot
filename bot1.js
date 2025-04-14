@@ -8,8 +8,8 @@ const http = require('http');
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('🟢 Bot online\n');
-}).listen(process.env.PORT || 3001, () => {
-    console.log(`🟢 Keep-alive server ishga tushdi: http://localhost:${process.env.PORT || 3001}`);
+}).listen(process.env.PORT || 3002, () => {
+    console.log(`🟢 Keep-alive server ishga tushdi: http://localhost:${process.env.PORT || 3002}`);
 });
 
 // --- Sozlamalar ---
