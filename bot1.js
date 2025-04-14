@@ -1,155 +1,98 @@
-const mineflayer = require('mineflayer');
-const Vec3 = require('vec3');
-const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
-const { GoalNear } = goals;
 const http = require('http');
+const mineflayer = require('mineflayer');
+require('colors').enable();
 
-// --- Uptime uchun HTTP server ---
+// --- Configlar ---
+const botUsername = 'lavash_kibr';
+const botPassword = 'fambot';
+const admin = 'lavash_city';
+let mcData;
+
+// --- Bot sozlamalari ---
+const botOption = {
+    host: 'hypixel.uz',
+    port: 25565,
+    username: botUsername,
+    password: botPassword,
+    version: '1.18.1',
+};
+
+// --- HTTP server (UptimeRobot uchun) ---
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('🟢 Bot online\n');
-}).listen(process.env.PORT  3001, () => {
-    console.log(`🟢 Keep-alive server ishga tushdi: http://localhost:${process.env.PORT  3001}`);
+    res.end('Bot ishlayapti\n');
+}).listen(process.env.PORT || 3000, () => {
+    console.log('HTTP server ishga tushdi (uptime uchun)');
 });
 
-// --- Sozlamalar ---
-const pswd = "fambot";
-const username = "lavash_kibr";
-const p1 = [ -6021, 84, 1940];
-const p2 = [ -6017, 84, 1941];
+// --- Botni ishga tushirish ---
+init();
 
-// --- Koordinatalar oralig‘i ---
-function range(a, b) {
-    a = parseInt(a);
-    b = parseInt(b);
-    let res = [];
-    if (a > b) for (let i = a; i >= b; i--) res.push(i);
-    else for (let i = a; i <= b; i++) res.push(i);
-    return res;
-}
+function init() {
+    const bot = mineflayer.createBot(botOption);
 
-const xrange = range(p1[0], p2[0]);
-const yrange = range(p1[1], p2[1]);
-const zrange = range(p1[2], p2[2]);
+    bot.on('spawn', () => {
+        mcData = require('minecraft-data')(bot.version);
+        console.log('Bot serverga kirdi!'.green);
 
-function createBot() {
-    const bot = mineflayer.createBot({
-        host: 'ir.skyblock.uz',
-        port: 25566,
-        username,
-        skipValidation: true,
-        fakeHost: 'ir.skyblock.uz',
-        version: '1.17.1',
+        // Kirganda buyrug‘i
+        bot.chat('/is go');
+
+        // 20 soniyadan keyin avtomatik qazish boshlanadi
+        setTimeout(() => {
+            dig();
+        }, 20000);
     });
 
-    bot.loadPlugin(pathfinder);
-    let status = "starting";
+    // Chat event
+    bot.on('messagestr', (message) => {
+        if (message.startsWith('Skyblock »')) return;
+        console.log(message);
 
-    bot.once('spawn', async () => {
-        console.log('✅ Bot serverga kirdi!');
-        console.log(📍 Botning turgan joyi: X:${bot.entity.position.x} Y:${bot.entity.position.y} Z:${bot.entity.position.z});
-        status = "waiting_for_login";
+        // Restart signal
+        if (message === 'Server: Serverni kunlik restartiga 30 sekund qoldi') {
+            bot.quit('20min');
+        }
 
-        bot.on('message', (message) => {
-            const msg = String(message);
-            console.log(💬 Xabar: ${msg});
-
-            if (status === "waiting_for_login") {
-                if (msg.toLowerCase().includes("register")) {
-                    console.log("📝 Ro‘yxatdan o‘tmoqda...");
-                    bot.chat(/register ${pswd} ${pswd});
-                } else if (msg.toLowerCase().includes("login")) {
-                    console.log("🔐 Kirish amalga oshirilmoqda...");
-                    bot.chat(/login ${pswd});
-                    status = "logged_in";
-                }
-            }
-        });
-
-        setTimeout(() => {
-            bot.chat('/is warp miner4');
-            console.log("🌀 /is warp miner4 ga teleport...");
-        }, 10000);
-
-        setTimeout(() => {
-            const defaultMove = new Movements(bot);
-            bot.pathfinder.setMovements(defaultMove);
-            bot.pathfinder.setGoal(new GoalNear(-6022, 83, 1940, 1));
-            console.log("➡️ Belgilangan nuqtaga bormoqda...");
-        }, 25000);
-
-        setTimeout(() => {
-            digZigZag();
-            console.log("⛏️ Qazish boshlandi...");
-        }, 30000);
+        // Ro‘yxatdan o‘tish yoki login
+        if (message.includes('register')) {
+            bot.chat(`/register ${botPassword} ${botPassword}`);
+        }
+        if (message.includes('login')) {
+            bot.chat(`/login ${botPassword}`);
+        }
+        if (message.includes('Вы успешно вошли в аккаунт')) {
+            bot.chat('/is warp miner1');
+        }
     });
 
-🗿, [14.04.2025 9:09]
-async function digZigZag() {
-        if (!bot.heldItem  !bot.heldItem.name.includes('pickaxe')) {
-            const pickaxe = bot.inventory.items().find(i => i.name.includes('pickaxe'));
-            if (pickaxe) await bot.equip(pickaxe, 'hand');
-            else {
-                console.log("❌ Pickaxe yo‘q. Chiqmoqda...");
-                return bot.quit();
-            }
+    // Admin buyruqlarini bajarish
+    bot.on('chat', (usernameSender, message) => {
+        if (usernameSender === admin && message.startsWith('! ')) {
+            const command = message.replace('! ', '');
+            bot.chat(command);
         }
+    });
 
-        async function digColumn(x, zList, yList) {
-            let qazildi = false;
-            for (let z of zList) {
-                for (let y of yList) {
-                    const pos = new Vec3(x, y, z);
-                    const block = bot.blockAt(pos);
-                    if (block && block.name !== 'air' && bot.canDigBlock(block)) {
-                        try {
-                            await bot.dig(block, true);
-                            qazildi = true;
-                        } catch (err) {
-                            console.log("❌ Qazishda xatolik:", err.message);
-                        }
-                    }
-                }
+    // Qazish funksiyasi
+    async function dig() {
+        try {
+            if (!bot.heldItem || !bot.heldItem.name.includes('pickaxe')) {
+                const pickaxe = bot.inventory.items().find(i => i.name.includes('pickaxe'));
+                if (pickaxe) await bot.equip(pickaxe, 'hand');
+                else return bot.quit(); // Pickaxe yo‘q bo‘lsa chiqib ketadi
             }
-            return qazildi;
-        }
 
-        async function startLoop() {
-            while (true) {
-                let qazilgan = false;
-
-                for (let i = 0; i < xrange.length; i++) {
-                    const ok = await digColumn(xrange[i], zrange, yrange);
-                    qazilgan = qazilgan  ok;
-                }
-
-                for (let i = xrange.length - 1; i >= 0; i--) {
-                    const ok = await digColumn(xrange[i], [...zrange].reverse(), [...yrange].reverse());
-                    qazilgan = qazilgan || ok;
-                }
-
-                if (!qazilgan) {
-                    console.log("⏳ Qaziladigan blok yo‘q, kutyapti...");
-                    await bot.waitForTicks(20);
-                }
+            const block = bot.blockAtCursor(7);
+            if (!block) {
+                return setTimeout(dig, 100); // Blok topilmasa kutadi
             }
-        }
 
-        startLoop();
+            await bot.dig(block);
+            dig(); // Recursive chaqirish
+        } catch (err) {
+            console.log('Xatolik:', err);
+            setTimeout(dig, 500); // Xatolik bo‘lsa keyinroq urinadi
+        }
     }
-
-    bot.on('kicked', (reason) => {
-        console.log(❌ Serverdan haydaldi: ${reason});
-    });
-
-    bot.on('error', (err) => {
-        console.log(⚠️ Xatolik: ${err.message});
-    });
-
-    bot.on('end', () => {
-        console.log("🔁 Bot chiqdi. Qayta ulanmoqda...");
-        setTimeout(createBot, 5000);
-    });
 }
-
-createBot();
