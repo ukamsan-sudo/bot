@@ -1,4 +1,4 @@
-const mineflayer = require('mineflayer');
+const mineflayer = require('mineflayer'); 
 const Vec3 = require('vec3');
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 const { GoalNear } = goals;
@@ -9,7 +9,7 @@ http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('🟢 Bot online\n');
 }).listen(process.env.PORT || 3001, () => {
-    console.log(`🟢 Keep-alive server ishga tushdi: http://localhost:${process.env.PORT || 3001}`);
+    console.log(`🟢 Keep-alive server ishga tushdi`);
 });
 
 // --- Sozlamalar ---
@@ -67,12 +67,12 @@ function createBot() {
         });
 
         // 👇 Chat buyruqlar: !say
-        bot.on('chat', (uname, message) => {
-            if (uname !== 'lavash_city') return;
+        bot.on('chat', (username, message) => {
+            if (username !== 'lavash_city') return;
 
             if (message.startsWith('!say ')) {
-                const toSay = message.slice(5).trim();
-                if (toSay.length > 0) {
+                const toSay = message.slice(5);
+                if (toSay.trim().length > 0) {
                     bot.chat(toSay);
                     console.log(`📢 Bot chatga yozdi: ${toSay}`);
                 } else {
@@ -94,10 +94,38 @@ function createBot() {
         }, 25000);
 
         setTimeout(() => {
-            // digZigZag(); // Agar kerak bo‘lsa qo‘shamiz
-            console.log("⛏️ Qazish boshlandi...");
+            digZigZag();
         }, 30000);
     });
+
+    // --- ⛏️ Qazish funksiyasi ---
+    async function digZigZag() {
+        console.log("⛏️ Qazish boshlandi...");
+
+        for (let y of yrange) {
+            for (let x of xrange) {
+                const row = [...zrange];
+                if ((x % 2) !== 0) row.reverse(); // Zig-zag efekti
+
+                for (let z of row) {
+                    const blockPos = new Vec3(x, y, z);
+                    const block = bot.blockAt(blockPos);
+
+                    if (!block || !bot.canDigBlock(block)) continue;
+
+                    try {
+                        await bot.pathfinder.goto(new goals.GoalBlock(x, y, z));
+                        await bot.dig(block);
+                        console.log(`🧱 Qazildi: ${block.name} @ (${x},${y},${z})`);
+                    } catch (err) {
+                        console.log(`⚠️ Xatolik (${x},${y},${z}):`, err.message);
+                    }
+                }
+            }
+        }
+
+        console.log("✅ Qazish tugadi.");
+    }
 }
 
 createBot();
