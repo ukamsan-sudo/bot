@@ -1,4 +1,4 @@
-const mineflayer = require('mineflayer'); 
+const mineflayer = require('mineflayer');
 const Vec3 = require('vec3');
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 const { GoalNear } = goals;
@@ -8,15 +8,15 @@ const http = require('http');
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('🟢 Bot online\n');
-}).listen(process.env.PORT  3001, () => {
-    console.log(`🟢 Keep-alive server ishga tushdi: http://localhost:${process.env.PORT  3001}`);
+}).listen(process.env.PORT || 3001, () => {
+    console.log(`🟢 Keep-alive server ishga tushdi: http://localhost:${process.env.PORT || 3001}`);
 });
 
 // --- Sozlamalar ---
 const pswd = "fambot";
 const username = "lavash_kibr";
-const p1 = [ -6021, 84, 1940];
-const p2 = [ -6017, 84, 1941];
+const p1 = [-6021, 84, 1940];
+const p2 = [-6017, 84, 1941];
 
 // --- Koordinatalar oralig‘i ---
 function range(a, b) {
@@ -47,34 +47,34 @@ function createBot() {
 
     bot.once('spawn', async () => {
         console.log('✅ Bot serverga kirdi!');
-        console.log(📍 Botning turgan joyi: X:${bot.entity.position.x} Y:${bot.entity.position.y} Z:${bot.entity.position.z});
+        console.log(`📍 Botning turgan joyi: X:${bot.entity.position.x} Y:${bot.entity.position.y} Z:${bot.entity.position.z}`);
         status = "waiting_for_login";
 
         bot.on('message', (message) => {
             const msg = String(message);
-            console.log(💬 Xabar: ${msg});
+            console.log(`💬 Xabar: ${msg}`);
 
             if (status === "waiting_for_login") {
                 if (msg.toLowerCase().includes("register")) {
                     console.log("📝 Ro‘yxatdan o‘tmoqda...");
-                    bot.chat(/register ${pswd} ${pswd});
+                    bot.chat(`/register ${pswd} ${pswd}`);
                 } else if (msg.toLowerCase().includes("login")) {
                     console.log("🔐 Kirish amalga oshirilmoqda...");
-                    bot.chat(/login ${pswd});
+                    bot.chat(`/login ${pswd}`);
                     status = "logged_in";
                 }
             }
         });
 
         // 👇 YANGI QISM: Adminning chat orqali buyruqlari
-        bot.on('chat', (username, message) => {
-            if (username !== 'lavash_city') return; // Faqat siz
+        bot.on('chat', (uname, message) => {
+            if (uname !== 'lavash_city') return; // Faqat sizga javob beradi
 
             if (message.startsWith('!say ')) {
-                const toSay = message.slice(5);
-                if (toSay.trim().length > 0) {
+                const toSay = message.slice(5).trim();
+                if (toSay.length > 0) {
                     bot.chat(toSay);
-                    console.log(📢 Bot chatga yozdi: ${toSay});
+                    console.log(`📢 Bot chatga yozdi: ${toSay}`);
                 } else {
                     bot.chat("❌ Yoziladigan matn yo‘q.");
                 }
@@ -94,9 +94,8 @@ function createBot() {
         }, 25000);
 
         setTimeout(() => {
-            // Bu yerda qazish funksiyasi bo‘lsa chaqiriladi
-            // digZigZag();
-            console.log("⛏️ Qazish boshlandi...");
+            console.log("⛏️ Qazish boshlanishi mumkin (funksiya chaqirilmagan hali).");
+            // Agar qazish funktsiyasi bor bo‘lsa: digZigZag();
         }, 30000);
     });
 }
