@@ -1,4 +1,4 @@
-const mineflayer = require('mineflayer');
+const mineflayer = require('mineflayer'); 
 const Vec3 = require('vec3');
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 const { GoalNear } = goals;
@@ -64,11 +64,18 @@ function createBot() {
                     status = "logged_in";
                 }
             }
+
+            // Anti-bot captcha bo‘lsa aniqlab javob berish (agar kerak bo‘lsa)
+            const match = msg.match(/\/captcha (\w+)/i);
+            if (match) {
+                bot.chat(`/captcha ${match[1]}`);
+                console.log(`🤖 Captcha javob berildi: ${match[1]}`);
+            }
         });
 
         // 👇 Chat buyruqlar: !say
-        bot.on('chat', (user, message) => {
-            if (user !== 'lavash_city') return;
+        bot.on('chat', (username, message) => {
+            if (username !== 'lavash_city') return;
 
             if (message.startsWith('!say ')) {
                 const toSay = message.slice(5);
@@ -81,11 +88,13 @@ function createBot() {
             }
         });
 
+        // 10 soniyadan so‘ng teleport
         setTimeout(() => {
             bot.chat('/is visit KomiljonHelper');
             console.log("🌀 /is visit KomiljonHelper ga teleport...");
         }, 10000);
 
+        // 25 soniyadan so‘ng nuqtaga yurish
         setTimeout(() => {
             const defaultMove = new Movements(bot);
             bot.pathfinder.setMovements(defaultMove);
@@ -93,11 +102,45 @@ function createBot() {
             console.log("➡️ Belgilangan nuqtaga bormoqda...");
         }, 25000);
 
+        // 30 soniyadan so‘ng qazish boshlanishi (kelajakda funksiyaga o‘tkazish mumkin)
         setTimeout(() => {
-            // digZigZag(); // Agar kerak bo‘lsa qo‘shasiz
             console.log("⛏️ Qazish boshlandi...");
         }, 30000);
-    });
-}
+
+        // === ANTI-BOT bypass ===
+
+        // 👀 Kamera burish
+        setInterval(() => {
+            const yaw = Math.random() * Math.PI * 2;
+            const pitch = (Math.random() - 0.5) * Math.PI / 2;
+            bot.look(yaw, pitch, true);
+            console.log("👀 Kamera burildi");
+        }, 5000);
+
+        // 🚶‍♂️ Harakat simulyatsiyasi
+        setInterval(async () => {
+            try {
+                bot.setControlState('forward', true);
+                await new Promise(r => setTimeout(r, 800));
+                bot.setControlState('forward', false);
+                bot.setControlState('back', true);
+                await new Promise(r => setTimeout(r, 500));
+                bot.setControlState('back', false);
+                console.log("🚶‍♂️ Bot harakatlandi");
+            } catch (e) {
+                console.error("⚠️ Harakatda xatolik:", e);
+            }
+        }, 10000);
+
+        // 🗨️ Chatga salom berish
+        bot.on('message', msg => {
+            if (msg.toString().toLowerCase().includes('salom')) {
+                bot.chat("Salom!");
+                console.log("🗨️ Bot salom berdi.");
+            }
+        });
+
+    }); // spawn end
+} // createBot end
 
 createBot();
