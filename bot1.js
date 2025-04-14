@@ -15,8 +15,8 @@ http.createServer((req, res) => {
 // --- Sozlamalar ---
 const pswd = "fambot";
 const username = "lavash_kibr";
-const p1 = [-6021, 84, 1940];
-const p2 = [-6017, 84, 1941];
+const p1 = [2734, 108, 1885];
+const p2 = [2735, 108, 1881];
 
 // --- Koordinatalar oralig‘i ---
 function range(a, b) {
@@ -66,9 +66,9 @@ function createBot() {
             }
         });
 
-        // 👇 YANGI QISM: Adminning chat orqali buyruqlari
+        // 👇 Chat buyruqlar: !say
         bot.on('chat', (uname, message) => {
-            if (uname !== 'lavash_city') return; // Faqat sizga javob beradi
+            if (uname !== 'lavash_city') return;
 
             if (message.startsWith('!say ')) {
                 const toSay = message.slice(5).trim();
@@ -82,20 +82,20 @@ function createBot() {
         });
 
         setTimeout(() => {
-            bot.chat('/is warp miner4');
-            console.log("🌀 /is warp miner4 ga teleport...");
+            bot.chat('/is visit KomiljonHelper');
+            console.log("🌀 /is visit KomiljonHelper ga teleport...");
         }, 10000);
 
         setTimeout(() => {
             const defaultMove = new Movements(bot);
             bot.pathfinder.setMovements(defaultMove);
-            bot.pathfinder.setGoal(new GoalNear(-6022, 83, 1940, 1));
+            bot.pathfinder.setGoal(new GoalNear(2734, 107, 1886, 1));
             console.log("➡️ Belgilangan nuqtaga bormoqda...");
         }, 25000);
 
         setTimeout(() => {
-            console.log("⛏️ Qazish boshlanishi mumkin (funksiya chaqirilmagan hali).");
-            // Agar qazish funktsiyasi bor bo‘lsa: digZigZag();
+            // digZigZag(); // Agar kerak bo‘lsa qo‘shamiz
+            console.log("⛏️ Qazish boshlandi...");
         }, 30000);
     });
 }
