@@ -1,4 +1,3 @@
-🗿, [14.04.2025 9:09]
 const mineflayer = require('mineflayer');
 const Vec3 = require('vec3');
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
