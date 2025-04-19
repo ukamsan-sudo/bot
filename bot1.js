@@ -120,10 +120,6 @@ bot.on('windowOpen', async (window) => {
             let attempts = 0;
             let chest = null;
             const maxAttempts = 3;
-
-fzdnv, [19.04.2025 15:18]
-
-
             while (!chest && attempts < maxAttempts) {
                 try {
                     chest = await bot.openChest(chestPosition);
