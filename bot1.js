@@ -55,7 +55,7 @@ function init() {
             bot.chat(`/login ${botPassword}`);
         }
     if (message.includes("Вы успешно вошли в аккаунт")) {
-            bot.chat(`/is warp sell`);
+            bot.chat(`/is warp farm`);
         }
 
         // Hisobdagi pullarni avtomatik yuborish
@@ -99,7 +99,7 @@ bot.on('windowOpen', async (window) => {
             }
             setTimeout(async () => {
                 await bot.closeWindow(window);
-                bot.chat('/is warp sell');
+                bot.chat('/is warp farm');
                 bot.chat('/is withdraw money 9999999999999999');
                 bot.chat('/bal');
             }, honeyCount * 20 + 100);
