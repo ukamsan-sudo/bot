@@ -1,4 +1,3 @@
-fzdnv, [19.04.2025 15:18]
 const mineflayer = require('mineflayer');
 
 const botUsername = 'Lavash_kibr02';
