@@ -1,4 +1,5 @@
 const mineflayer = require('mineflayer');
+const http = require('http'); // render uchun sun'iy server
 
 const botUsername = 'Lavash_kibr02';
 const botPassword = 'fambot';
@@ -161,3 +162,12 @@ function startBot() {
 }
 
 startBot();
+
+// 🔧 Render Web Service uchun soxta HTTP server
+const port = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200);
+    res.end('Bot is running\n');
+}).listen(port, () => {
+    console.log(`Fake HTTP server running on port ${port}`);
+});
