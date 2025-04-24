@@ -102,7 +102,7 @@ function startBot() {
     });
 
     async function withdrawHoney(bot, mcData) {
-        bot.chat('/is warp sell');
+        bot.chat('/is warp farm');
         setTimeout(async () => {
             const chestPosition = await bot.findBlock({
                 matching: mcData.blocksByName.chest.id,
