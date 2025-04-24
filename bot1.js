@@ -1,5 +1,4 @@
 const mineflayer = require('mineflayer');
-const http = require('http'); // render uchun sun'iy server
 
 const botUsername = 'Lavash_kibr02';
 const botPassword = 'fambot';
@@ -8,32 +7,39 @@ const admin = 'lavash_city';
 let lastPaidAmount = 0;
 
 function startBot() {
-    const botOption = {
+    const bot = mineflayer.createBot({
         host: 'hypixel.uz',
         port: 25565,
         username: botUsername,
         password: botPassword,
         version: '1.18.1',
         keepAlive: true,
-    };
+    });
 
-    const bot = mineflayer.createBot(botOption);
     let mcData;
+    let isLoggedIn = false;
 
     bot.on("spawn", () => {
-        mcData = require("minecraft-data")(bot.version);
-        console.log("✅ Bot serverga kirdi!");
+        const loginWaiter = setInterval(() => {
+            if (isLoggedIn) {
+                clearInterval(loginWaiter);
+                mcData = require("minecraft-data")(bot.version);
+                console.log("✅ Bot to'liq kirdi!");
 
-        bot.chat("/is warp farm");
+                bot.chat("/is warp farm");
 
-        setInterval(() => {
-            bot.setControlState("jump", true);
-            setTimeout(() => bot.setControlState("jump", false), 500);
-        }, 3 * 60 * 1000);
+                // AFK chiqib ketmaslik uchun sakrash
+                setInterval(() => {
+                    bot.setControlState("jump", true);
+                    setTimeout(() => bot.setControlState("jump", false), 500);
+                }, 3 * 60 * 1000);
 
-        setInterval(() => {
-            withdrawHoney(bot, mcData);
-        }, 15 * 60 * 1000);
+                // Asal olish va sotish
+                setInterval(() => {
+                    withdrawHoney(bot, mcData);
+                }, 15 * 60 * 1000);
+            }
+        }, 1000);
     });
 
     bot.on("messagestr", (message) => {
@@ -47,11 +53,11 @@ function startBot() {
             bot.chat(`/login ${botPassword}`);
         }
         if (message.includes("Вы успешно вошли в аккаунт")) {
-            bot.chat("/is warp farm");
+            isLoggedIn = true;
         }
 
         if (message === "Server: Serverni kunlik restartiga 30 sekund qoldi") {
-            bot.quit("Restart bo'lishi sababli chiqdi");
+            bot.quit("Kunlik restart uchun chiqdi");
         }
 
         if (message.includes("Balance: $")) {
@@ -97,13 +103,13 @@ function startBot() {
         }
     });
 
-    bot.on("error", (err) => {
-        console.log("❌ Xatolik:", err.message);
+    bot.on("end", (reason) => {
+        console.log("🔄 Bot uzildi. Sabab:", reason || "Noma'lum. 5 soniyadan so'ng qayta ulanmoqda...");
+        setTimeout(startBot, 5000);
     });
 
-    bot.on("end", () => {
-        console.log("🔄 Bot uzildi. 5 soniyadan so'ng qayta ulanmoqda...");
-        setTimeout(startBot, 5000);
+    bot.on("error", (err) => {
+        console.log("❌ Xatolik:", err.message);
     });
 
     async function withdrawHoney(bot, mcData) {
@@ -162,12 +168,3 @@ function startBot() {
 }
 
 startBot();
-
-// 🔧 Render Web Service uchun soxta HTTP server
-const port = process.env.PORT || 3000;
-http.createServer((req, res) => {
-    res.writeHead(200);
-    res.end('Bot is running\n');
-}).listen(port, () => {
-    console.log(`Fake HTTP server running on port ${port}`);
-});
