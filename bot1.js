@@ -1,170 +1,296 @@
-const mineflayer = require('mineflayer');
+const mineflayer = require('mineflayer')
 
-const botUsername = 'Lavash_kibr02';
-const botPassword = 'fambot';
-const admin = 'lavash_city';
+const Vec3 = require('vec3');
 
-let lastPaidAmount = 0;
 
-function startBot() {
-    const bot = mineflayer.createBot({
-        host: 'hypixel.uz',
-        port: 25565,
-        username: botUsername,
-        password: botPassword,
-        version: '1.18.1',
-        keepAlive: true,
-    });
+let status = "starting"
+sell_status = "main"
 
-    let mcData;
-    let isLoggedIn = false;
+let mcData = undefined;
 
-    bot.on("spawn", () => {
-        const loginWaiter = setInterval(() => {
-            if (isLoggedIn) {
-                clearInterval(loginWaiter);
-                mcData = require("minecraft-data")(bot.version);
-                console.log("✅ Bot to'liq kirdi!");
 
-                bot.chat("/is warp farm");
+const bot = mineflayer.createBot({
+  host: 'ir.skyblock.uz',
+  port: 25566,
+  username: 'lavash_kibr02',
+  skipValidation: true,
+  fakeHost: 'ir.skyblock.uz',
+  version: '1.17.1',
+  hideErrors: false,
+  checkTimeoutInterval: 3600 * 1000
+})
 
-                // AFK chiqib ketmaslik uchun sakrash
-                setInterval(() => {
-                    bot.setControlState("jump", true);
-                    setTimeout(() => bot.setControlState("jump", false), 500);
-                }, 3 * 60 * 1000);
 
-                // Asal olish va sotish
-                setInterval(() => {
-                    withdrawHoney(bot, mcData);
-                }, 15 * 60 * 1000);
-            }
-        }, 1000);
-    });
+bot.once('spawn', () => {
+    mcData = require('minecraft-data')(bot.version)
 
-    bot.on("messagestr", (message) => {
-        if (message.startsWith("Skyblock »")) return;
-        console.log(message);
+    console.log('spawned')
+    
+    if(status == "starting")
+    {
+        status = "waiting_for_login"
+    }
+    if(status == "selling")
+    {
+        status = 'ready'
+    }
+})
 
-        if (message.includes("register")) {
-            bot.chat(`/register ${botPassword} ${botPassword}`);
+
+
+pswd = "fambot"
+
+bot.on('messagestr', function(message, pos, jsonMsg) {
+    console.log(message)
+    if(status == "waiting_for_login")
+    {
+        if (message.includes('/reg')) {
+            bot.chat('/register ' + pswd + ' ' + pswd);
+            status = "ready"
+            return
         }
-        if (message.includes("login")) {
-            bot.chat(`/login ${botPassword}`);
+        if (message.includes('/log')) {
+            bot.chat('/login ' + pswd);
+            status = "ready"
+            return
         }
-        if (message.includes("Вы успешно вошли в аккаунт")) {
-            isLoggedIn = true;
+    }
+})
+
+
+function range(p1, p2) {
+    p1 = parseInt(p1)
+    p2 = parseInt(p2)
+    
+    let res = [];
+    if(p1 > p2)
+    {
+        for(let j=p1;j>=p2;j--)
+        {
+            res.push(j);
         }
-
-        if (message === "Server: Serverni kunlik restartiga 30 sekund qoldi") {
-            bot.quit("Kunlik restart uchun chiqdi");
+    }
+    else
+    {
+        for(let j=p1;j<=p2;j++)
+        {
+            res.push(j);
         }
+    }
+    return res;
+}
 
-        if (message.includes("Balance: $")) {
-            const balanceStr = message.match(/Balance: \$([\d,]+)/);
-            if (!balanceStr || balanceStr.length < 2) return;
+p1 = [2944, 88, 5136]
+p2 = [2944, 88, 5135]
+xrange = range(p1[0], p2[0]);
+yrange = range(p1[1], p2[1]);
+zrange = range(p1[2], p2[2]);
 
-            const balance = parseInt(balanceStr[1].replace(/,/g, ""));
-            if (balance > 0 && balance !== lastPaidAmount) {
-                bot.chat(`/pay ${admin} ${balance}`);
-                lastPaidAmount = balance;
-            }
-        }
-    });
+console.log(xrange);
+console.log(yrange);
+console.log(zrange);
 
-    bot.on("whisper", (usernameSender, message) => {
-        if (usernameSender === admin && message.startsWith("! ")) {
-            const command = message.slice(2);
-            bot.chat(command);
-        }
-    });
+blocks = [];
 
-    bot.on("windowOpen", async (window) => {
-        setTimeout(() => bot.closeWindow(window), 19000);
+i = 0;
 
-        if (window.title.includes("Island Shop | Food")) {
-            let honeySlots = window.slots
-                .map((item, index) => ({ item, index }))
-                .filter(({ item }) => item?.name === "honey_bottle");
+let sellist = ['honey_bottle']
+let savelist = []
 
-            honeySlots.forEach(({ index }, i) => {
-                setTimeout(() => {
-                    bot.simpleClick.rightMouse(index);
-                }, 20 * i);
-            });
+let not_trash = sellist.concat(savelist); 
 
-            const totalDelay = honeySlots.length * 20 + 100;
-            setTimeout(async () => {
-                await bot.closeWindow(window);
-                bot.chat("/is warp farm");
-                bot.chat("/is withdraw money 9999999999999999");
-                bot.chat("/bal");
-            }, totalDelay);
-        }
-    });
+let activeWindow = null
 
-    bot.on("end", (reason) => {
-        console.log("🔄 Bot uzildi. Sabab:", reason || "Noma'lum. 5 soniyadan so'ng qayta ulanmoqda...");
-        setTimeout(startBot, 5000);
-    });
+let scanning_block = 0;
 
-    bot.on("error", (err) => {
-        console.log("❌ Xatolik:", err.message);
-    });
+let cooldown = 0;
 
-    async function withdrawHoney(bot, mcData) {
-        try {
-            bot.chat("/is warp farm");
-            await new Promise(r => setTimeout(r, 500));
-
-            const chestPosition = await bot.findBlock({
-                matching: mcData.blocksByName.chest.id,
-                maxDistance: 5,
-            });
-            if (!chestPosition) return;
-
-            let attempts = 0;
-            let chest = null;
-
-            while (!chest && attempts < 3) {
-                try {
-                    chest = await bot.openChest(chestPosition);
-                } catch (err) {
-                    console.log(`Chest ochishda xato: ${err}. Urinish: ${attempts + 1}`);
-                    attempts++;
-                    await new Promise(r => setTimeout(r, 3000));
-                }
-            }
-
-            if (!chest) return;
-
-            function hasFreeSlot() {
-                return bot.inventory.emptySlotCount() > 0;
-            }
-
-            for (let slot of chest.slots) {
-                if (slot?.name === 'honey_bottle' && slot.count > 0) {
-                    while (slot.count > 0 && hasFreeSlot()) {
-                        const toWithdraw = Math.min(slot.count, bot.inventory.itemLimit - slot.count);
-                        try {
-                            await chest.withdraw(slot.type, null, toWithdraw);
-                            slot.count -= toWithdraw;
-                        } catch {
-                            break;
-                        }
-                    }
-                    if (!hasFreeSlot()) break;
-                }
-            }
-
-            await new Promise(r => setTimeout(r, 1000));
-            await chest.close();
-            await new Promise(r => setTimeout(r, 1000));
-            bot.chat("/is shop Food");
-        } catch (err) {
-            console.log("❌ withdrawHoney xatoligi:", err.message);
-        }
+function clean() {
+    cooldown = 40
+    bot.chat('/is warp sellzone2');
+    sell_status = "cleaning"
+    
+    if(activeWindow != null)
+    {
+        bot.closeWindow(activeWindow);
     }
 }
 
-startBot();
+
+bot.on('physicsTick', () => {
+    i = i + 1;
+    
+    if(i > 50)
+    {
+        if(status == "ready")
+        {
+            gotoPosition()
+            status = "going"
+            
+        }
+        
+        if(status == 'loading')
+        {
+            for(let x of xrange)
+            {
+                for(let y of yrange)
+                {
+                    for(let z of zrange)
+                    {
+                        let pos = new Vec3(x, y, z);
+                        block = bot.blockAt(pos);
+                        if((block._properties.type ?? '') == 'left')
+                        {
+                            blocks.push(block);
+                        }
+                    }
+                }
+            }
+            status = 'selling'
+        }
+        i = 0;
+    }
+    
+    if(cooldown > 0)
+    {
+        cooldown-=1;
+        return;
+    }
+        
+    if(status == 'selling')
+    {
+        if(sell_status == 'scanning')
+        {
+            if(scanning_block >= blocks.length)
+            {
+                scanning_block = 0;
+            }
+            
+            let items_count = bot.inventory.items().length;
+                   
+            if(activeWindow != null)
+            {
+                items_count = activeWindow.slots.filter(i => (i?.slot ?? 0) >= activeWindow.inventoryStart).length;
+            }
+            
+            if(items_count > 27)
+            {
+                clean()
+                return;
+            }
+            else
+            {
+                if(activeWindow == null)
+                {
+                    cooldown = 30;
+                    bot.openContainer(blocks[scanning_block]);
+                    return
+                }
+                
+                if(activeWindow != null)
+                {
+                    let chest_items = activeWindow.slots.filter(i => i!=null && i.type != null && (i?.count ?? 0) > 10 && (i?.slot ?? 999) < activeWindow.inventoryStart && savelist.indexOf(i.name ?? "") == -1);
+                    if(chest_items.length > 0)
+                    {
+                        cooldown = 2
+
+fzdnv, [24.04.2025 14:54]
+activeWindow.withdraw(chest_items[0].type, null, chest_items[0].count);
+                    }
+                    else
+                    {
+                        bot.closeWindow(activeWindow);
+                        scanning_block+=1;
+                    }
+                }
+            }
+        }
+        
+        if(sell_status == 'main')
+        {
+            if(bot.inventory.items().length > 5)
+            {
+                clean()
+            }
+            else
+            {
+                sell_status = "scanning"
+            }
+            return;
+        }
+        
+        if(sell_status == 'cleaning')
+        {
+            let trash = bot.inventory.items().filter(i => not_trash.indexOf(i.name) < 0);
+            console.log(trash.length);
+            if(trash.length == 0)
+            {
+                sell_status = "waiting"
+                bot.chat('/is shop Food');
+            }
+            else
+            {
+                bot.tossStack(trash[0])
+                return
+            }
+        }
+        
+        if(sell_status == 'selling_ores')
+        {
+        
+            for(let name of sellist)
+            {
+                let items = bot.inventory.items().filter(i => i.name == name);
+                if(activeWindow == null)
+                {
+                    sell_status = "waiting"
+                    bot.chat('/is shop Food');
+                }
+                if(activeWindow != null)
+                {
+                    console.log(items.length);
+                    items = activeWindow.slots.filter(i => (i?.slot ?? 0) >= activeWindow.inventoryStart).filter(i => i.name == name);
+                    console.log(items.length);
+                }
+                
+                if(items.length > 0)
+                {
+                    if(name == 'honey_bottle')
+                    {
+                        bot.simpleClick.rightMouse(21)
+                        bot.simpleClick.rightMouse(21)
+                        return
+                    }
+                }
+            }
+            
+            sell_status = 'main'
+            bot.closeWindow(activeWindow)
+        }
+    }
+})
+
+currentWindowId = 0;
+
+bot.on('windowOpen', (window) => {
+    activeWindow = window
+    currentWindowId+=1;
+    console.log("Opened window: " + window.title);
+    if(window.title.indexOf("Food") > 0)
+    {
+        sell_status = "selling_ores"
+    }
+})
+
+bot.on('windowClose', () => {
+    activeWindow = null
+});
+
+bot.on('updateSlot', console.log)
+
+function gotoPosition() {
+    bot.chat("/is warp farm")
+    setTimeout(() => {
+        status = "loading"
+    }, 3000);
+}
